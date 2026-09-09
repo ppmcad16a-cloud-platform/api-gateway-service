@@ -1,0 +1,15 @@
+name: API Gateway Service CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    uses: ppmcad16a-cloud-platform/core-cloud-platform/.github/workflows/node-app.yaml@main
+    with:
+      node-version: "20"
+      run-tests: true
