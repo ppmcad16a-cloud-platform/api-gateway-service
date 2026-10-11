@@ -49,6 +49,16 @@ it('defaults to port 3000 when PORT is unset', () => {
   expect(capturedPort).toBe(3000);
 });
 
+it('reports 503 degraded on /api/health when backends are unreachable', async () => {
+  // Every *_URL above points at port 1, where nothing listens.
+  const res = await request(capturedApp).get('/api/health');
+  expect(res.status).toBe(503);
+  expect(res.body).toEqual({
+    status: 'degraded',
+    services: { identity: 'down', catalog: 'down', commerce: 'down', notification: 'down' }
+  });
+});
+
 it("defaults BASE_API_URL to 'api', registering the catch-all under /api", async () => {
   const res = await request(capturedApp).get('/api/does-not-exist');
   expect(res.status).toBe(404);

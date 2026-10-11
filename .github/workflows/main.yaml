@@ -35,6 +35,8 @@ jobs:
     uses: ppmcad16a-cloud-platform/core-cloud-platform/.github/workflows/node-app.yaml@v1
     with:
       node-version: "22"
+      build-docker: true
+      image-name: api-gateway-service
 
   # Scan the whole git history for leaked secrets.
   secret-scan:
