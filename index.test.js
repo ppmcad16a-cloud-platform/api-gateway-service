@@ -6,6 +6,8 @@ const socketio = require('socket.io');
 
 process.env.PORT = '0';
 process.env.BASE_API_URL = 'api';
+process.env.LOG_LEVEL = 'silent';
+delete process.env.CORS_ORIGINS;
 
 // Four fake backend services, each just echoing back which service it is
 // and the exact path/method it received — enough to prove the gateway
@@ -83,8 +85,7 @@ describe.each([
   ['/api/review', 'catalog'],
   ['/api/wishlist', 'catalog'],
   ['/api/graphql', 'commerce'],
-  ['/api/contact/add', 'notification'],
-  ['/api/notification/order-confirmation', 'notification']
+  ['/api/contact/add', 'notification']
 ])('routing %s', (path, expectedService) => {
   it(`proxies to the ${expectedService} service, path unchanged`, async () => {
     const res = await request(capturedServer).get(path);
@@ -93,6 +94,43 @@ describe.each([
     expect(res.body.service).toBe(expectedService);
     expect(res.body.url).toBe(path);
   });
+});
+
+it('does NOT expose the internal notification endpoint publicly', async () => {
+  const res = await request(capturedServer).post('/api/notification/order-confirmation');
+  expect(res.status).toBe(404);
+  expect(res.body).toBe('No API route found');
+});
+
+it.each(['/health', '/ready'])('answers the Kubernetes probe %s', async path => {
+  const res = await request(capturedServer).get(path);
+  expect(res.status).toBe(200);
+  expect(res.body).toEqual({ status: 'ok' });
+});
+
+it('reports healthy on /api/health when every backend is ready', async () => {
+  const res = await request(capturedServer).get('/api/health');
+  expect(res.status).toBe(200);
+  expect(res.body).toEqual({
+    status: 'ok',
+    services: { identity: 'up', catalog: 'up', commerce: 'up', notification: 'up' }
+  });
+});
+
+it('exposes Prometheus metrics with low-cardinality route labels', async () => {
+  await request(capturedServer).get('/api/product/list?page=2');
+  await request(capturedServer).get('/api/graphql');
+  await request(capturedServer).get('/not-under-api-prefix');
+
+  const res = await request(capturedServer).get('/metrics');
+  expect(res.status).toBe(200);
+  expect(res.headers['content-type']).toMatch(/text\/plain/);
+  expect(res.text).toContain('http_request_duration_seconds_bucket');
+  expect(res.text).toContain('route="/api/product"');
+  expect(res.text).toContain('route="/api/graphql"');
+  expect(res.text).toContain('route="other"');
+  expect(res.text).toContain('service="api-gateway-service"');
+  expect(res.text).toContain('process_cpu_user_seconds_total');
 });
 
 it('returns 404 with a JSON body for an unmatched path under the API prefix', async () => {
