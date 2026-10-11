@@ -1,1 +1,42 @@
-node_modules
+# dependencies (lockfiles ARE committed so builds are reproducible)
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# build output
+build/
+dist/
+target/
+
+# test output
+coverage/
+htmlcov/
+.coverage
+.pytest_cache/
+tests/globalConfig.json
+
+# secrets / local config - NEVER commit these
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vs/
+*.swp
+.history/
