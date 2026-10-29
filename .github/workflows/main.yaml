@@ -41,6 +41,7 @@ jobs:
       build-docker: true
       image-name: api-gateway-service
       push-images: true
+      deploy-after-push: true
 
   # Scan the whole git history for leaked secrets.
   secret-scan:
