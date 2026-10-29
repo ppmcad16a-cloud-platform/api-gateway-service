@@ -5,7 +5,7 @@
 # ppmcad16a-cloud-platform/core-cloud-platform and is shared
 # by every service, so all services follow the same standards.
 #
-# @v1 = tested release of the shared workflows (see the
+# @v2 = tested release of the shared workflows (see the
 #       "Versioning" section of the core-cloud-platform README).
 # ============================================================
 
@@ -32,12 +32,16 @@ jobs:
   # Build, test (coverage gate) and - if enabled - build + scan
   # the container image.
   build:
-    uses: ppmcad16a-cloud-platform/core-cloud-platform/.github/workflows/node-app.yaml@v1
+    permissions:
+      contents: read
+      id-token: write # the image job logs in to the clouds (main branch only)
+    uses: ppmcad16a-cloud-platform/core-cloud-platform/.github/workflows/node-app.yaml@v2
     with:
       node-version: "22"
       build-docker: true
       image-name: api-gateway-service
+      push-images: true
 
   # Scan the whole git history for leaked secrets.
   secret-scan:
-    uses: ppmcad16a-cloud-platform/core-cloud-platform/.github/workflows/security-scan.yaml@v1
+    uses: ppmcad16a-cloud-platform/core-cloud-platform/.github/workflows/security-scan.yaml@v2
